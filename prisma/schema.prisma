@@ -1,0 +1,119 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LinkKind {
+  GITHUB
+  TELEGRAM
+  EMAIL
+  PHONE
+  PROFI_RU
+  YOUTUBE
+  BEHANCE
+  WEBSITE
+  OTHER
+
+  @@map("link_kind")
+}
+
+enum SkillCategory {
+  DEVELOPMENT
+  INTEGRATIONS_OPERATIONS
+  QUALITY_AUTOMATION
+
+  @@map("skill_category")
+}
+
+model Profile {
+  id          String        @id @default(uuid()) @db.Uuid
+  slug        String        @unique
+  fullName    String        @map("full_name")
+  headline    String
+  summary     String        @db.Text
+  location    String?
+  workFormat  String?       @map("work_format")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  links       ProfileLink[]
+  skills      Skill[]
+  experiences Experience[]
+  projects    Project[]
+
+  @@map("profiles")
+}
+
+model ProfileLink {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  kind      LinkKind
+  label     String
+  url       String
+  sortOrder Int      @map("sort_order")
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("profile_links")
+}
+
+model Skill {
+  id        String        @id @default(uuid()) @db.Uuid
+  profileId String        @map("profile_id") @db.Uuid
+  name      String
+  category  SkillCategory
+  details   String?
+  sortOrder Int           @map("sort_order")
+  profile   Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, name])
+  @@index([profileId, category])
+  @@map("skills")
+}
+
+model Experience {
+  id           String        @id @default(uuid()) @db.Uuid
+  profileId    String        @map("profile_id") @db.Uuid
+  company      String
+  position     String
+  startDate    DateTime      @map("start_date") @db.Date
+  endDate      DateTime?     @map("end_date") @db.Date
+  summary      String?       @db.Text
+  sortOrder    Int           @map("sort_order")
+  profile      Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  achievements Achievement[]
+
+  @@index([profileId])
+  @@map("experiences")
+}
+
+model Achievement {
+  id           String     @id @default(uuid()) @db.Uuid
+  experienceId String     @map("experience_id") @db.Uuid
+  text         String
+  sortOrder    Int        @map("sort_order")
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId])
+  @@map("achievements")
+}
+
+model Project {
+  id                  String   @id @default(uuid()) @db.Uuid
+  profileId           String   @map("profile_id") @db.Uuid
+  name                String
+  description         String?  @db.Text
+  url                 String?
+  repositoryUrl       String?  @map("repository_url")
+  isRepositoryPrivate Boolean  @default(false) @map("is_repository_private")
+  technologies        String[]
+  sortOrder           Int      @map("sort_order")
+  profile             Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("projects")
+}

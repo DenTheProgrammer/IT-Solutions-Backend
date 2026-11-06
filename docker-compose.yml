@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: candidate
+      POSTGRES_PASSWORD: candidate_dev
+      POSTGRES_DB: candidate
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U candidate -d candidate"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://candidate:candidate_dev@db:5432/candidate?schema=public
+      PORT: 3000
+      NODE_ENV: production
+    ports:
+      - "${APP_HOST_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    stop_grace_period: 15s
+
+volumes:
+  postgres_data:

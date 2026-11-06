@@ -1,0 +1,83 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Achievement {
+  id: ID!
+  text: String!
+}
+
+type Experience {
+  achievements: [Achievement!]!
+  company: String!
+
+  """Месяц окончания работы в формате YYYY-MM; null — по настоящее время."""
+  endDate: String
+  id: ID!
+  isCurrent: Boolean!
+  position: String!
+
+  """Месяц начала работы в формате YYYY-MM."""
+  startDate: String!
+}
+
+enum LinkKind {
+  BEHANCE
+  EMAIL
+  GITHUB
+  OTHER
+  PHONE
+  PROFI_RU
+  TELEGRAM
+  WEBSITE
+  YOUTUBE
+}
+
+type Profile {
+  experiences: [Experience!]!
+  fullName: String!
+  headline: String!
+  id: ID!
+  links: [ProfileLink!]!
+  location: String
+  projects: [Project!]!
+  skills(category: SkillCategory): [Skill!]!
+  slug: String!
+  summary: String!
+  workFormat: String
+}
+
+type ProfileLink {
+  id: ID!
+  kind: LinkKind!
+  label: String!
+  url: String!
+}
+
+type Project {
+  description: String
+  id: ID!
+  isRepositoryPrivate: Boolean!
+  name: String!
+  repositoryUrl: String
+  technologies: [String!]!
+  url: String
+}
+
+type Query {
+  profile(slug: String!): Profile
+  profiles: [Profile!]!
+}
+
+type Skill {
+  category: SkillCategory!
+  details: String
+  id: ID!
+  name: String!
+}
+
+enum SkillCategory {
+  DEVELOPMENT
+  INTEGRATIONS_OPERATIONS
+  QUALITY_AUTOMATION
+}

@@ -1,0 +1,73 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.40
+    shm_size: 32m
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-candidate}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment env file}
+      POSTGRES_DB: ${POSTGRES_DB:-candidate}
+    command:
+      - postgres
+      - -c
+      - shared_buffers=16MB
+      - -c
+      - max_connections=15
+      - -c
+      - work_mem=1MB
+      - -c
+      - maintenance_work_mem=16MB
+      - -c
+      - effective_cache_size=64MB
+      - -c
+      - max_parallel_workers=0
+      - -c
+      - max_worker_processes=2
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  app:
+    image: ${APP_IMAGE:?Set APP_IMAGE to it-solutions-card:<tag>}
+    restart: unless-stopped
+    mem_limit: 192m
+    cpus: 0.60
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set a PostgreSQL URL pointing at db with a URL-encoded password}
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-5}
+      PORT: 3000
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=96
+      TRUST_PROXY: private
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT:-3200}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health', { signal: AbortSignal.timeout(4000) }).then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1));"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,15 @@
+/node_modules/
+/dist/
+/dist-seed/
+/coverage/
+/src/generated/
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
+!deploy/.env.prod.example
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
